@@ -16,9 +16,12 @@
             <p class="text-muted">No extensions available yet. Add entries to the GitHub catalog.</p>
         </div>
     {% else %}
+        <input type="text" class="search-input" id="search-extensions" placeholder="Search extensions..." autocomplete="off">
+        <div class="no-results" id="no-results" style="display: none;">No extensions match your search.</div>
+
         {% for ext in extensions %}
             {% set deployment = deployments[ext.slug] is defined ? deployments[ext.slug] : null %}
-            <div class="card" style="display: flex; align-items: flex-start; gap: 1.5rem;">
+            <div class="card extension-card" data-search="{{ ext.defaultLabel|lower }} {{ ext.name|lower }} {{ ext.slug|lower }} {{ ext.description|default('')|lower }}" style="display: flex; align-items: flex-start; gap: 1.5rem;">
                 <div style="flex: 1;">
                     <h2 style="font-size: 1.15rem; margin-bottom: 0.3rem;">{{ ext.defaultLabel }}</h2>
                     <p class="text-muted" style="margin-bottom: 0.5rem;">
@@ -78,6 +81,23 @@
     {% endif %}
 
     <script>
+    (function() {
+        var searchInput = document.getElementById('search-extensions');
+        var noResults = document.getElementById('no-results');
+        if (searchInput) {
+            var cards = document.querySelectorAll('.extension-card');
+            searchInput.addEventListener('input', function() {
+                var query = this.value.toLowerCase().trim();
+                var visible = 0;
+                cards.forEach(function(card) {
+                    var match = !query || card.getAttribute('data-search').indexOf(query) !== -1;
+                    card.style.display = match ? 'flex' : 'none';
+                    if (match) visible++;
+                });
+                noResults.style.display = (visible === 0 && query) ? 'block' : 'none';
+            });
+        }
+    })();
     function toggleConfig(el) {
         var details = el.nextElementSibling;
         var isOpen = details.style.display === 'block';
