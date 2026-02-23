@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akeneo Token</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        h1 {
+            margin-bottom: 0.5rem;
+            color: #5236a3;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .card label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+        .value-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+        .value-row code {
+            flex: 1;
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.85rem;
+            word-break: break-all;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+        }
+        .copy-btn {
+            flex-shrink: 0;
+            padding: 0.6rem 1rem;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #555;
+            transition: all 0.15s;
+        }
+        .copy-btn:hover {
+            background: #f0f0f0;
+            border-color: #bbb;
+        }
+        .copy-btn.copied {
+            background: #e8f5e9;
+            border-color: #a5d6a7;
+            color: #2e7d32;
+        }
+        .warning {
+            background: #fff3e0;
+            border: 1px solid #ffe0b2;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #e65100;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Akeneo Token Retrieved</h1>
+        <p class="subtitle">Copy these credentials for direct API usage.</p>
+
+        <div class="card">
+            <label>PIM URL</label>
+            <div class="value-row">
+                <code id="val-pim-url">{{ pim_url }}</code>
+                <button class="copy-btn" onclick="copyValue('val-pim-url', this)">Copy</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <label>Client ID</label>
+            <div class="value-row">
+                <code id="val-client-id">{{ client_id }}</code>
+                <button class="copy-btn" onclick="copyValue('val-client-id', this)">Copy</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <label>Client Secret</label>
+            <div class="value-row">
+                <code id="val-client-secret">{{ client_secret }}</code>
+                <button class="copy-btn" onclick="copyValue('val-client-secret', this)">Copy</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <label>Access Token</label>
+            <div class="value-row">
+                <code id="val-access-token">{{ access_token }}</code>
+                <button class="copy-btn" onclick="copyValue('val-access-token', this)">Copy</button>
+            </div>
+        </div>
+
+        <div class="warning">
+            Keep these credentials safe. The access token grants full API access to your PIM.
+        </div>
+    </div>
+
+    <script>
+        function copyValue(id, btn) {
+            const text = document.getElementById(id).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

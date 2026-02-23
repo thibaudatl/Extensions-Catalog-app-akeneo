@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Extension Catalog{% endblock %}
+
+{% block body %}
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <h1 style="margin-bottom: 0;">Extension Catalog</h1>
+        <form method="post" action="{{ path('catalog_refresh') }}">
+            <button type="submit" class="btn btn-secondary btn-sm">Refresh Catalog</button>
+        </form>
+    </div>
+    <p class="subtitle">Deploy extensions to <strong>{{ pim_url }}</strong></p>
+
+    {% if extensions is empty %}
+        <div class="card">
+            <p class="text-muted">No extensions available yet. Add entries to the GitHub catalog.</p>
+        </div>
+    {% else %}
+        {% for ext in extensions %}
+            {% set deployment = deployments[ext.slug] is defined ? deployments[ext.slug] : null %}
+            <div class="card" style="display: flex; align-items: flex-start; gap: 1.5rem;">
+                <div style="flex: 1;">
+                    <h2 style="font-size: 1.15rem; margin-bottom: 0.3rem;">{{ ext.defaultLabel }}</h2>
+                    <p class="text-muted" style="margin-bottom: 0.5rem;">
+                        <code style="font-size:0.8rem;background:#f0f0f0;padding:0.1rem 0.4rem;border-radius:3px">{{ ext.name }}</code>
+                        &middot; v{{ ext.version }}
+                        &middot; {{ ext.position }}
+                    </p>
+                    {% if ext.description %}
+                        <p style="font-size: 0.9rem; color: #555; margin-bottom: 0.5rem;">{{ ext.description }}</p>
+                    {% endif %}
+
+                    {% if deployment %}
+                        <span class="badge badge-{{ deployment.status }}">{{ deployment.status|upper }}</span>
+                        {% if deployment.lastError %}
+                            <p style="font-size: 0.8rem; color: #c62828; margin-top: 0.3rem;">{{ deployment.lastError }}</p>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if ext.customVariables is not null or ext.documentationUrl is not null %}
+                        <div style="margin-top: 0.6rem;">
+                            <a href="javascript:void(0)" class="config-toggle" onclick="toggleConfig(this)">&#9654; Configuration details</a>
+                            <div class="config-details">
+                                {% if ext.customVariables is not null %}
+                                    <p style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">Custom Variables (JSON):</p>
+                                    <div style="position: relative;">
+                                        <pre class="config-json">{{ ext.customVariables|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre>
+                                        <button type="button" class="copy-btn" onclick="copyJson(this)">Copy</button>
+                                    </div>
+                                {% endif %}
+                                {% if ext.documentationUrl is not null %}
+                                    <p style="font-size: 0.8rem; margin-top: 0.5rem;">
+                                        <strong>Documentation:</strong>
+                                        <a href="{{ ext.documentationUrl }}" target="_blank" rel="noopener noreferrer">{{ ext.documentationUrl }}</a>
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.4rem; min-width: 120px;">
+                    {% if deployment is null or deployment.status == 'failed' or deployment.status == 'deleted' %}
+                        <form method="post" action="{{ path('catalog_deploy', {slug: ext.slug}) }}">
+                            <button type="submit" class="btn btn-success btn-sm" style="width:100%">Deploy</button>
+                        </form>
+                    {% elseif deployment.status == 'deployed' %}
+                        <form method="post" action="{{ path('catalog_update', {slug: ext.slug}) }}">
+                            <button type="submit" class="btn btn-warning btn-sm" style="width:100%">Update</button>
+                        </form>
+                        <form method="post" action="{{ path('catalog_undeploy', {slug: ext.slug}) }}" onsubmit="return confirm('Remove this extension from your PIM?')">
+                            <button type="submit" class="btn btn-danger btn-sm" style="width:100%">Undeploy</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <script>
+    function toggleConfig(el) {
+        var details = el.nextElementSibling;
+        var isOpen = details.style.display === 'block';
+        details.style.display = isOpen ? 'none' : 'block';
+        el.innerHTML = (isOpen ? '&#9654;' : '&#9660;') + ' Configuration details';
+    }
+    function copyJson(btn) {
+        var text = btn.previousElementSibling.textContent;
+        navigator.clipboard.writeText(text).then(function() {
+            btn.textContent = 'Copied!';
+            setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+        });
+    }
+    </script>
+{% endblock %}

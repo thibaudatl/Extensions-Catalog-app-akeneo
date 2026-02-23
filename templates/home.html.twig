@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Akeneo Extension Repository{% endblock %}
+
+{% block body %}
+    <div style="text-align: center; padding: 3rem 0;">
+        <h1 style="font-size: 2rem; margin-bottom: 1rem;">Extension Repository</h1>
+        <p class="subtitle" style="font-size: 1.1rem; max-width: 500px; margin: 0 auto 2rem;">
+            Browse and deploy extensions to your Akeneo PIM instance with one click.
+        </p>
+
+        {% if app.session.get('access_token') %}
+            <a href="{{ path('catalog_index') }}" class="btn btn-primary" style="font-size: 1rem; padding: 0.8rem 2rem;">
+                Go to Catalog
+            </a>
+        {% else %}
+            <div class="card" style="max-width: 480px; margin: 0 auto;">
+                <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Connect Your PIM</h2>
+                <p class="text-muted" style="margin-bottom: 1rem;">
+                    To browse and deploy extensions, first connect your Akeneo PIM by installing this app from your PIM's App Store.
+                </p>
+                <p class="text-muted">
+                    The OAuth flow will start automatically when you install the app from your Akeneo PIM.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
