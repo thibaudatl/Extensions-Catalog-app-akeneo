@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connect Your PIM{% endblock %}
+
+{% block body %}
+    <div style="text-align: center; padding: 3rem 0;">
+        <h1 style="font-size: 2rem; margin-bottom: 1rem;">
+            <i class="bi bi-plug"></i> PIM Not Connected
+        </h1>
+        <div class="card" style="max-width: 520px; margin: 0 auto;">
+            <p style="font-size: 1.1rem; margin-bottom: 1rem;">
+                To browse and deploy extensions, you need to connect your Akeneo PIM first.
+            </p>
+            <p class="text-muted" style="margin-bottom: 1.5rem;">
+                Install this app from your PIM's App Store — the OAuth flow will start automatically and bring you back here.
+            </p>
+            <a href="{{ path('home') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </a>
+        </div>
+    </div>
+{% endblock %}

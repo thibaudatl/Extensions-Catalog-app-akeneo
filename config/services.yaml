@@ -11,3 +11,7 @@ services:
         resource: '../src/'
         exclude:
             - '../src/Kernel.php'
+
+    App\Security\Encryptor:
+        arguments:
+            $appSecret: '%env(APP_SECRET)%'
