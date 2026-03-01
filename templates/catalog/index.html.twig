@@ -6,6 +6,7 @@
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
         <h1 style="margin-bottom: 0;">Extension Catalog</h1>
         <form method="post" action="{{ path('catalog_refresh') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('catalog_refresh') }}">
             <button type="submit" class="btn btn-secondary btn-sm">Refresh Catalog</button>
         </form>
     </div>
@@ -65,13 +66,16 @@
                 <div style="display: flex; flex-direction: column; gap: 0.4rem; min-width: 120px;">
                     {% if deployment is null or deployment.status == 'failed' or deployment.status == 'deleted' %}
                         <form method="post" action="{{ path('catalog_deploy', {slug: ext.slug}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('catalog_deploy_' ~ ext.slug) }}">
                             <button type="submit" class="btn btn-success btn-sm" style="width:100%">Deploy</button>
                         </form>
                     {% elseif deployment.status == 'deployed' %}
                         <form method="post" action="{{ path('catalog_update', {slug: ext.slug}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('catalog_update_' ~ ext.slug) }}">
                             <button type="submit" class="btn btn-warning btn-sm" style="width:100%">Update</button>
                         </form>
                         <form method="post" action="{{ path('catalog_undeploy', {slug: ext.slug}) }}" onsubmit="return confirm('Remove this extension from your PIM?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('catalog_undeploy_' ~ ext.slug) }}">
                             <button type="submit" class="btn btn-danger btn-sm" style="width:100%">Undeploy</button>
                         </form>
                     {% endif %}

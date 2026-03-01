@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\DeploymentRepository;
+use App\Repository\PimTokenRepository;
 use App\Service\ExtensionDeployer;
 use App\Service\GitHubCatalogProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -13,14 +14,23 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/catalog')]
 class CatalogController extends AbstractController
 {
-    private function requireSession(Request $request): array
-    {
-        $session = $request->getSession();
-        $pimUrl = $session->get('pim_url');
-        $accessToken = $session->get('access_token');
+    public function __construct(
+        private PimTokenRepository $tokenRepository,
+    ) {
+    }
 
-        if (!$pimUrl || !$accessToken) {
-            throw $this->createAccessDeniedException('Please connect your PIM first.');
+    private function getCredentials(Request $request): ?array
+    {
+        $pimUrl = $request->getSession()->get('pim_url');
+
+        if (!$pimUrl) {
+            return null;
+        }
+
+        $accessToken = $this->tokenRepository->getAccessToken($pimUrl);
+
+        if (!$accessToken) {
+            return null;
         }
 
         return [$pimUrl, $accessToken];
@@ -32,7 +42,13 @@ class CatalogController extends AbstractController
         GitHubCatalogProvider $catalogProvider,
         DeploymentRepository $deploymentRepo,
     ): Response {
-        [$pimUrl, $accessToken] = $this->requireSession($request);
+        $credentials = $this->getCredentials($request);
+
+        if (!$credentials) {
+            return $this->render('catalog/not_connected.html.twig');
+        }
+
+        [$pimUrl, $accessToken] = $credentials;
 
         $extensions = $catalogProvider->getCatalog();
         $deployments = $deploymentRepo->findDeploymentMapForPim($pimUrl);
@@ -49,7 +65,15 @@ class CatalogController extends AbstractController
         Request $request,
         GitHubCatalogProvider $catalogProvider,
     ): Response {
-        $this->requireSession($request);
+        $credentials = $this->getCredentials($request);
+        if (!$credentials) {
+            throw $this->createAccessDeniedException('Please connect your PIM first.');
+        }
+
+        if (!$this->isCsrfTokenValid('catalog_refresh', $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
         $catalogProvider->clearCache();
         $this->addFlash('success', 'Catalog refreshed from GitHub.');
 
@@ -63,7 +87,16 @@ class CatalogController extends AbstractController
         GitHubCatalogProvider $catalogProvider,
         ExtensionDeployer $deployer,
     ): Response {
-        [$pimUrl, $accessToken] = $this->requireSession($request);
+        $credentials = $this->getCredentials($request);
+        if (!$credentials) {
+            throw $this->createAccessDeniedException('Please connect your PIM first.');
+        }
+
+        if (!$this->isCsrfTokenValid('catalog_deploy_' . $slug, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        [$pimUrl, $accessToken] = $credentials;
 
         $extension = $catalogProvider->getExtension($slug);
         if (!$extension) {
@@ -89,7 +122,16 @@ class CatalogController extends AbstractController
         ExtensionDeployer $deployer,
         DeploymentRepository $deploymentRepo,
     ): Response {
-        [$pimUrl, $accessToken] = $this->requireSession($request);
+        $credentials = $this->getCredentials($request);
+        if (!$credentials) {
+            throw $this->createAccessDeniedException('Please connect your PIM first.');
+        }
+
+        if (!$this->isCsrfTokenValid('catalog_update_' . $slug, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        [$pimUrl, $accessToken] = $credentials;
 
         $extension = $catalogProvider->getExtension($slug);
         if (!$extension) {
@@ -121,7 +163,16 @@ class CatalogController extends AbstractController
         ExtensionDeployer $deployer,
         DeploymentRepository $deploymentRepo,
     ): Response {
-        [$pimUrl, $accessToken] = $this->requireSession($request);
+        $credentials = $this->getCredentials($request);
+        if (!$credentials) {
+            throw $this->createAccessDeniedException('Please connect your PIM first.');
+        }
+
+        if (!$this->isCsrfTokenValid('catalog_undeploy_' . $slug, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+
+        [$pimUrl, $accessToken] = $credentials;
 
         $extension = $catalogProvider->getExtension($slug);
         if (!$extension) {

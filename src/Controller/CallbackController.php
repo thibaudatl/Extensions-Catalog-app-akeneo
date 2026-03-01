@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\PimTokenRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,8 +12,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class CallbackController extends AbstractController
 {
     #[Route('/callback', name: 'callback', methods: ['GET'])]
-    public function __invoke(Request $request, HttpClientInterface $httpClient): Response
-    {
+    public function __invoke(
+        Request $request,
+        HttpClientInterface $httpClient,
+        PimTokenRepository $tokenRepository,
+    ): Response {
         $session = $request->getSession();
 
         $state = $request->query->get('state');
@@ -46,12 +50,30 @@ class CallbackController extends AbstractController
             ],
         ]);
 
+        if ($response->getStatusCode() !== 200) {
+            throw new \RuntimeException(sprintf('Token exchange failed with status %d.', $response->getStatusCode()));
+        }
+
         $data = $response->toArray();
 
-        // Store token and pim_url in session for catalog/deploy usage
+        $accessToken = $data['access_token'] ?? null;
+
+        if (!$accessToken) {
+            throw new \RuntimeException('Token exchange response missing access_token.');
+        }
+
+        // Persist encrypted token to database
+        $tokenRepository->upsert($pimUrl, $accessToken);
+
+        // Clean up session: keep only pim_url, remove sensitive data
         $session->remove('oauth_state');
+        $session->remove('access_token');
+
+        // Regenerate session ID to prevent session fixation
+        $session->migrate(true);
+
+        // Keep pim_url in session for catalog lookups
         $session->set('pim_url', $pimUrl);
-        $session->set('access_token', $data['access_token'] ?? null);
 
         return $this->redirectToRoute('catalog_index');
     }

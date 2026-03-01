@@ -5,6 +5,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 class ActivateController extends AbstractController
@@ -22,6 +23,8 @@ class ActivateController extends AbstractController
             throw $this->createNotFoundException('Missing pim_url query parameter.');
         }
 
+        $this->validatePimUrl($pimUrl);
+
         $state = bin2hex(random_bytes(16));
 
         $session = $request->getSession();
@@ -38,5 +41,24 @@ class ActivateController extends AbstractController
         ]);
 
         return new RedirectResponse($authorizeUrl);
+    }
+
+    private function validatePimUrl(string $pimUrl): void
+    {
+        $parsed = parse_url($pimUrl);
+
+        if (!$parsed || !isset($parsed['scheme'], $parsed['host'])) {
+            throw new BadRequestHttpException('Invalid pim_url.');
+        }
+
+        if ($parsed['scheme'] !== 'https') {
+            throw new BadRequestHttpException('pim_url must use HTTPS.');
+        }
+
+        $host = strtolower($parsed['host']);
+
+        if (!str_ends_with($host, '.cloud.akeneo.com')) {
+            throw new BadRequestHttpException('pim_url must be an Akeneo Cloud instance (.cloud.akeneo.com).');
+        }
     }
 }
