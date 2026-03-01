@@ -1,0 +1,49 @@
+services:
+    app:
+        build:
+            context: .
+            target: production
+        image: extensions-catalog:prod
+        environment:
+            HOME: /tmp
+            APP_ENV: prod
+            APP_DEBUG: "0"
+            APP_SECRET: ${APP_SECRET}
+            DATABASE_URL: ${DATABASE_URL}
+            CLIENT_ID: ${CLIENT_ID}
+            CLIENT_SECRET: ${CLIENT_SECRET}
+            TRUSTED_PROXIES: ${TRUSTED_PROXIES}
+            TRUSTED_HOSTS: ${TRUSTED_HOSTS}
+            PHP_OPCACHE_VALIDATE_TIMESTAMPS: "0"
+        volumes:
+            - app_var:/srv/app/var
+        restart: unless-stopped
+        expose:
+            - "80"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.app.rule=Host(`${APP_HOST}`)"
+            - "traefik.http.routers.app.entrypoints=http,https"
+            - "traefik.http.routers.app.tls=true"
+            - "traefik.http.routers.app.tls.certresolver=letsencrypt"
+            - "traefik.http.services.app.loadbalancer.server.port=80"
+            - "coolify.traefik=false"
+            - "traefik.docker.network=coolify"
+        healthcheck:
+            test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/healthz || exit 1"]
+            interval: 20s
+            timeout: 5s
+            retries: 15
+            start_period: 30s
+        networks:
+            - default
+            - coolify
+
+volumes:
+    app_var:
+
+networks:
+    default:
+    coolify:
+        external: true
+        name: coolify
